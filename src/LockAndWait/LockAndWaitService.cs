@@ -6,6 +6,8 @@ namespace LockAndWait
     public sealed class LockAndWaitService(IDatabase database) : ILockAndWaitService
     {
         private readonly IDatabase _db = database ?? throw new ArgumentNullException(nameof(database));
+        private const string Prefix = "LockAndWait";
+
         private const string ReleaseScript = @"
             if redis.call('GET', KEYS[1]) == ARGV[1] then
                 return redis.call('DEL', KEYS[1])
@@ -19,7 +21,7 @@ namespace LockAndWait
             if (ttl <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be positive.");
 
             var token = Guid.NewGuid().ToString("N");
-            var acquired = await _db.StringSetAsync(key, token, ttl, when: When.NotExists).ConfigureAwait(false);
+            var acquired = await _db.StringSetAsync($"{Prefix}:{key}", token, ttl, when: When.NotExists).ConfigureAwait(false);
             if (!acquired) return null;
 
             return new LockHandle(key, token, DateTimeOffset.UtcNow, ttl);
@@ -31,7 +33,7 @@ namespace LockAndWait
 
             var res = await _db.ScriptEvaluateAsync(
                 ReleaseScript,
-                [handle.Key],
+                [$"{Prefix}:{handle.Key}"],
                 [handle.Token]
             ).ConfigureAwait(false);
 
@@ -51,7 +53,7 @@ namespace LockAndWait
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var exists = await _db.KeyExistsAsync(key).ConfigureAwait(false);
+                var exists = await _db.KeyExistsAsync($"{Prefix}:{key}").ConfigureAwait(false);
                 if (!exists) return true;
 
                 if (timeout is not null && sw.Elapsed >= timeout.Value)

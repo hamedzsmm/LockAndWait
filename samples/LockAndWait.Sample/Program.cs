@@ -4,33 +4,32 @@ namespace LockAndWait.Sample;
 
 internal class Program
 {
-    private static void Main()
+    private static readonly string Key = "DemoLock";
+
+    private static async Task Main()
     {
         var services = new ServiceCollection();
         services.AddLockAndWaitService("localhost:6379");
 
-        using var sp = services.BuildServiceProvider();
-        var svc = sp.GetRequiredService<ILockAndWaitService>();
+        await using var sp = services.BuildServiceProvider();
+        var lockAndWaitService = sp.GetRequiredService<ILockAndWaitService>();
 
-        var key = "demo:lock";
-        var handle = svc.AcquireAsync(key, TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-        if (handle is null)
-        {
-            Console.WriteLine("Busy. Waiting ...");
-            svc.WaitAsync(key, timeout: TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
-            handle = svc.AcquireAsync(key, TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-        }
+        lockAndWaitService.AcquireAsync(Key, TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
 
-        if (handle is not null)
-        {
-            Console.WriteLine($"Acquired: {handle}");
-            System.Threading.Thread.Sleep(1000);
-            var released = svc.ReleaseAsync(handle).GetAwaiter().GetResult();
-            Console.WriteLine($"Released: {released}");
-        }
-        else
-        {
-            Console.WriteLine("Could not acquire the lock.");
-        }
+
+        //In Another Command Or Application Can Wait For This Lock
+        await DoAnything(sp);
+    }
+
+    static Task DoAnything(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var lockAndWaitService = scope.ServiceProvider.GetRequiredService<ILockAndWaitService>();
+
+        Console.WriteLine("Waiting ...");
+        var lockIsFree = lockAndWaitService.WaitAsync(Key, timeout: TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+
+        Console.WriteLine(lockIsFree ? "Lock is free , DoAnything Is Running" : "Timeout on Waiting for lock was timeout");
+        return Task.CompletedTask;
     }
 }
