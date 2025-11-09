@@ -1,10 +1,10 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
-using LockAndWait;
 
-class Program
+namespace LockAndWait.Sample;
+
+internal class Program
 {
-    static void Main()
+    private static void Main()
     {
         var services = new ServiceCollection();
         services.AddLockAndWaitService("localhost:6379");

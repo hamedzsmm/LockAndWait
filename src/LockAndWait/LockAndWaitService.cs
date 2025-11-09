@@ -1,25 +1,17 @@
 using StackExchange.Redis;
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace LockAndWait
 {
-    public sealed class LockAndWaitService : ILockAndWaitService
+    public sealed class LockAndWaitService(IDatabase database) : ILockAndWaitService
     {
-        private readonly IDatabase _db;
+        private readonly IDatabase _db = database ?? throw new ArgumentNullException(nameof(database));
         private const string ReleaseScript = @"
             if redis.call('GET', KEYS[1]) == ARGV[1] then
                 return redis.call('DEL', KEYS[1])
             else
                 return 0
             end";
-
-        public LockAndWaitService(IDatabase database)
-        {
-            _db = database ?? throw new ArgumentNullException(nameof(database));
-        }
 
         public async Task<LockHandle?> AcquireAsync(string key, TimeSpan ttl, CancellationToken cancellationToken = default)
         {
@@ -39,12 +31,12 @@ namespace LockAndWait
 
             var res = await _db.ScriptEvaluateAsync(
                 ReleaseScript,
-                new RedisKey[] { handle.Key },
-                new RedisValue[] { handle.Token }
+                [handle.Key],
+                [handle.Token]
             ).ConfigureAwait(false);
 
             if (res.IsNull) return false;
-            var releasedCount = (long)res;  // RedisResult -> long
+            var releasedCount = (long)res;
             return releasedCount == 1;
         }
 
