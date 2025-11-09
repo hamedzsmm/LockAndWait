@@ -20,7 +20,7 @@ internal class Program
         await using var sp = services.BuildServiceProvider();
         var lockAndWaitService = sp.GetRequiredService<ILockAndWaitService>();
 
-        lockAndWaitService.AcquireAsync(Key, TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
+        lockAndWaitService.AcquireAsync(Key, TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
 
 
         //In Another Command Or Application Can Wait For This Lock
