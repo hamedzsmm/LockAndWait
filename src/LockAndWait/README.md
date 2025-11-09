@@ -1,4 +1,4 @@
-# LockAndWait (v1.0.0)
+# LockAndWait (v1.0.1)
 
 - Distributed Lock and Wait
 

@@ -7,7 +7,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>LockAndWait</PackageId>
 		<Title>LockAndWait</Title>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>Hamed Seifi</Authors>
 		<Description>Redis-based distributed lock with Acquire, Release, and Wait APIs + DI extension AddLockAndWaitService().</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

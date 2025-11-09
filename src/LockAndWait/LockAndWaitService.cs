@@ -45,8 +45,8 @@ namespace LockAndWait
         public async Task<bool> WaitAsync(string key, TimeSpan? pollInterval = null, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             if (key is null) throw new ArgumentNullException(nameof(key));
-            var delay = pollInterval ?? TimeSpan.FromMilliseconds(100);
-            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMilliseconds(50);
+            var delay = pollInterval ?? TimeSpan.FromMilliseconds(200);
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMilliseconds(100);
 
             var sw = Stopwatch.StartNew();
             while (true)
